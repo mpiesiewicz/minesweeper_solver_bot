@@ -33,23 +33,75 @@ class Tile():
             else:
                 newIndex = self.getIndex(newX, newY)
                 self.neighbours.append(board[newIndex])
-            
+
+
     def get_surrounding_info(self, board: BoardType):
 
         self.num_unrevealed_neighbours = 0
 
-        for [dx, dy] in Tile.DIRECTIONS:
-            newX = self.x + dx
-            newY = self.y + dy
+        # Assign self mine chance if flagged or revealed
+        self._mine_chance = 1 if self.flagged else self.mine_chance
+        self._mine_chance = 0 if self.state == 'revealed' or self.value == 0 else self.mine_chance
 
-            if newX < 0 or newY < 0 or newX >= self.num_columns or newY >= self.num_columns:
+        for neighbour in self.neighbours:
+
+            # Assign unrevealed neighbours num for unrevealed tiles
+            if (neighbour.state == 'hidden' and
+                neighbour.flagged == False):
+                self.num_unrevealed_neighbours += 1
+
+            # Subtract tile value if next to a flag
+            if neighbour.flagged and self.state == 'revealed':
+                self.value -= 1
+
+
+
+
+    # def update_values_if_next_to_a_flag(self):
+    #     # Subtract Tile value if flag is next to it
+    #     for neighbour in self.neighbours:
+    #         if neighbour.flagged and self.state == 'revealed':
+    #             self.value -= 1
+
+
+    def propagate_mine_chance(self):
+        # propagate mine chance for adjacent cells
+
+        for neighbour in self.neighbours:
+
+            if neighbour.state == 'revealed':
                 continue
-            else:
-                newIndex = self.getIndex(newX, newY)
-                if board[newIndex].state == 'hidden':
-                    self.num_unrevealed_neighbours += 1
 
-                
+            if self.value == 0:
+                neighbour._mine_chance = 0
+            
+            elif (self.state == 'revealed' and
+                self.num_unrevealed_neighbours > 0):
+                new_mine_chance = self.value / self.num_unrevealed_neighbours
+                neighbour.mine_chance = new_mine_chance
+
+        print('done')
+
+        # if self.value == 0:
+        #     for neighbour in self.neighbours:
+        #         neighbour._mine_chance = 0
+
+        # elif (self.state != 'hidden' and
+        #     self.value is not None and 
+        #     self.value > 0 and 
+        #     self.num_unrevealed_neighbours > 0):
+
+        #     for neighbour in self.neighbours:
+        #         if neighbour.state == 'revealed':
+        #             neighbour.mine_chance = 0
+        #         else:
+        #             neighbour.mine_chance = self.value / self.num_unrevealed_neighbours
+
+
+
+        # if self.state == 'revealed':
+        #     self._mine_chance = 0
+
     def getCoordinates(self, index: int):
         # convert index to coordinates
         index = int(index)
@@ -70,24 +122,6 @@ class Tile():
         self.state = 'revealed'
         self.value = value
         self._mine_chance = None
-    
-    def propagate_mine_chance(self):
-        # propagate mine chance for adjacent cells
-        if (self.state != 'hidden' and
-            self.value is not None and 
-            self.value > 0 and 
-            self.num_unrevealed_neighbours > 0):
-
-            self._mine_chance = 0
-
-            for neighbour in self.neighbours:
-                if neighbour.state == 'revealed':
-                    neighbour.mine_chance = 0
-                else:
-                    neighbour.mine_chance = self.value / self.num_unrevealed_neighbours
-
-        elif self.state == 'revealed':
-            self._mine_chance = 0
                 
 
     def __repr__(self) -> str:
@@ -115,12 +149,28 @@ class Tile():
 
     @mine_chance.setter
     def mine_chance(self, new_mine_chance):
-        if new_mine_chance > self._mine_chance:
+
+        # Do nothing if mine chance is 0
+        if self.mine_chance == 0:
+            self._mine_chance = self.mine_chance
+
+        # Assign to 0 if new is 0
+        elif new_mine_chance == 0:
             self._mine_chance = new_mine_chance
+
+        # Assign if greater
+        elif new_mine_chance > self._mine_chance:
+            self._mine_chance = new_mine_chance
+        
+        # Assign if None
         elif self.mine_chance is None:
             self._mine_chance = new_mine_chance
+        
+        # Do not assign if revealed
         elif self.state == 'revealed':
             self._mine_chance = 0
+        
+        # Do not assign if flagged
         elif self.flagged:
             self._mine_chance = 1
 

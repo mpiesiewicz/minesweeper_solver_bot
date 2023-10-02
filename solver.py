@@ -14,6 +14,8 @@ class Solver():
         self.num_columns, self.num_rows, self.num_mines = self.analyze_game_settings()
         self.board = Board(self.num_columns, self.num_rows, self.num_mines)
         self.grid_data = self.update_board()
+        self.game_on = True
+        self.game_state = None
 
     def initialize(self):
         p = sync_playwright().start()
@@ -44,14 +46,15 @@ class Solver():
         return num_columns, num_rows, num_mines
 
     def update_board(self):
+
         # Capture the Minesweeper grid HTML
-        grid_html = self.page.inner_html('#board')
+        page_html = self.page.inner_html('body')
 
         # Parse the HTML using BeautifulSoup
-        grid_soup = BeautifulSoup(grid_html, 'html.parser')
-
+        soup = BeautifulSoup(page_html, 'html.parser')
+    
         # Extract the grid cells and their IDs
-        grid_cells = grid_soup.find_all('div', class_='tile')
+        grid_cells = soup.find_all('div', class_='tile')
 
         for cell in grid_cells:
             cell_id = cell['id']
@@ -81,15 +84,20 @@ class Solver():
 
         while game_on:
 
-            #BUG - when flagged - odejmij z countera min oraz oznacz jako revealed
-            # inaczej w nieskonczonosc flaguje te same pola
             mines = self.board.get_highest_mine_chances()
+            print(f'found 100% mines: {mines}')
             if not mines:
+                print(f'no 100%s, calculating lowest chance...')
                 lowest_mine_chance = self.board.get_lowest_mine_chance()
-                self.reveal(lowest_mine_chance.index)
+                print(f'lowest chance: {lowest_mine_chance[0]}')
+                for tile in lowest_mine_chance:
+                    self.reveal(tile.index)
+
             else:
                 for tile in mines:
                     self.flag(tile.index)
+
+            self.update_board()
 
         print('done')
 
@@ -97,12 +105,12 @@ class Solver():
     def reveal(self, index):
         id = f"#t{index}"
         self.page.click(id)
-        self.update_board()
+        # self.update_board()
 
     def flag(self, index):
         id = f"#t{index}"
         self.page.click(id, button='right')
-        self.update_board()
+        # self.update_board()
 
     # def after_click(self):
     #     self.update_board()

@@ -24,21 +24,48 @@ class Board():
     def recalculate(self):
         for tile in self.tiles:
             tile.get_surrounding_info(self)
+            # tile.update_values_if_next_to_a_flag()
             tile.propagate_mine_chance()
     
     def get_highest_mine_chances(self) -> List[TileType]:
         # 100% chances exist
-        return [tile for tile in self.tiles if tile._mine_chance == 1]
+        return [tile for tile in self.tiles if tile._mine_chance == 1 and tile.flagged == False]
             
-    def get_lowest_mine_chance(self) -> TileType:
-        # get best chance tile
-        best_chance = 1
-        for tile in self.tiles:
-            if tile.mine_chance < best_chance and tile.state != 'revealed':
-                best_chance = tile.mine_chance
-                best_chance_tile = tile
+    # def get_lowest_mine_chance(self) -> List[TileType]:
+    #     # get best chance tile
+    #     best_chance = 1
+    #     best_chance_tiles = list()
 
-        return best_chance_tile
+    #     for tile in self.tiles:
+
+    #         if (tile.mine_chance == 0 and
+    #             tile.flagged == False and
+    #             tile.state != 'revealed'):
+
+    #             best_chance = tile.mine_chance
+    #             best_chance_tiles.append(tile)
+            
+    #         elif (tile.mine_chance < best_chance and 
+    #             tile.state != 'revealed' and
+    #             tile.flagged == False):
+
+    #             best_chance = tile.mine_chance
+    #             best_chance_tiles = [tile]
+
+    #     return best_chance_tiles
+
+    def get_lowest_mine_chance(self) -> List[TileType]:
+        # Get tiles with a mine chance of zero
+        zero_chance_tiles = [tile for tile in self.tiles if tile.mine_chance == 0 and not tile.flagged and tile.state != 'revealed']
+
+        if zero_chance_tiles:
+            return zero_chance_tiles
+        
+        else:
+            # If there are no zero chance tiles, find the tile with the lowest mine chance
+            lowest_chance = min(tile.mine_chance for tile in self.tiles if not tile.flagged and tile.state != 'revealed')
+            lowest_chance_tile = next(tile for tile in self.tiles if tile.mine_chance == lowest_chance and not tile.flagged and tile.state != 'revealed')
+            return [lowest_chance_tile]
 
     def __str__(self) -> str:
         return
