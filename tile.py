@@ -22,6 +22,7 @@ class Tile():
         self.num_unrevealed_neighbours: Optional[int]  = None
         self._mine_chance: Optional[float] = None
 
+
     def assign_neighbours(self, board: BoardType):
 
         for [dx, dy] in Tile.DIRECTIONS:
@@ -55,15 +56,6 @@ class Tile():
                 self.value -= 1
 
 
-
-
-    # def update_values_if_next_to_a_flag(self):
-    #     # Subtract Tile value if flag is next to it
-    #     for neighbour in self.neighbours:
-    #         if neighbour.flagged and self.state == 'revealed':
-    #             self.value -= 1
-
-
     def propagate_mine_chance(self):
         # propagate mine chance for adjacent cells
 
@@ -80,27 +72,6 @@ class Tile():
                 new_mine_chance = self.value / self.num_unrevealed_neighbours
                 neighbour.mine_chance = new_mine_chance
 
-        print('done')
-
-        # if self.value == 0:
-        #     for neighbour in self.neighbours:
-        #         neighbour._mine_chance = 0
-
-        # elif (self.state != 'hidden' and
-        #     self.value is not None and 
-        #     self.value > 0 and 
-        #     self.num_unrevealed_neighbours > 0):
-
-        #     for neighbour in self.neighbours:
-        #         if neighbour.state == 'revealed':
-        #             neighbour.mine_chance = 0
-        #         else:
-        #             neighbour.mine_chance = self.value / self.num_unrevealed_neighbours
-
-
-
-        # if self.state == 'revealed':
-        #     self._mine_chance = 0
 
     def getCoordinates(self, index: int):
         # convert index to coordinates
@@ -109,15 +80,18 @@ class Tile():
         y = index // self.num_columns
         return [x, self.num_columns - 1 - y]
 
+
     def getIndex(self, x: int, y: int):
         # get index from coordinates
         return (self.num_columns-1-y)*self.num_columns+(x)
     
+
     def calculate_mine_chance(self, num_mines: int):
         # calculate mine chance for this cell
         if self._mine_chance == None:
             self._mine_chance = num_mines / (self.num_columns * self.num_rows)
     
+
     def reveal(self, value: int):
         self.state = 'revealed'
         self.value = value
@@ -127,13 +101,6 @@ class Tile():
     def __repr__(self) -> str:
         return f"ID: {self.index} | Value: {self.value} | Mine Chance: {self._mine_chance}"
     
-    # def __getitem__(self, key):
-    #     if key.startswith("t"):
-    #         # If the key starts with "t", extract the numerical part and convert it to an integer
-    #         tile_index = int(key[1:])
-    #         return self.tiles[tile_index]
-    #     else:
-    #         return self.tiles[tile_index]
 
     def __setitem__(self, key, tile_data):
         if key.startswith("t"):
@@ -143,9 +110,11 @@ class Tile():
         if self.value == 0:
             self._mine_chance = 0
 
+
     @property
     def mine_chance(self):
         return self._mine_chance
+
 
     @mine_chance.setter
     def mine_chance(self, new_mine_chance):
